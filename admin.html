@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>Admin — Daftar Hadir</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Admin-specific extra style -->
+  <style>
+    .app-header { background: #1a1a2e; }
+    body { background: #0f172a; }
+    @media (prefers-color-scheme: light) { body { background: #f0f4f8; } }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING ──────────────────────────────────────────── -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>Memuat panel admin…</p>
+</div>
+
+<!-- ── TOAST ────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: LOGIN
+     ══════════════════════════════════════════════════════ -->
+<div id="modal-login" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <div class="modal">
+    <div class="login-modal">
+      <div class="big-icon" role="img" aria-label="Kunci">🔐</div>
+      <h2 id="login-title">Login Admin</h2>
+      <p class="sub">Masukkan password untuk mengakses panel</p>
+
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label" for="input-password">Password</label>
+        <input
+          type="password" id="input-password" class="form-control"
+          placeholder="Password admin" autocomplete="current-password"
+          aria-describedby="login-error"
+        >
+      </div>
+      <p id="login-error" class="field-err" role="alert" style="display:none;margin-bottom:12px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12
+                   2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        Password salah. Coba lagi.
+      </p>
+
+      <button id="btn-login" class="btn btn-primary btn-full">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="white">
+          <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8
+                   c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+        </svg>
+        Masuk
+      </button>
+
+      <a href="index.html" class="back-link">← Kembali ke halaman tamu</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: KONFIRMASI HAPUS
+     ══════════════════════════════════════════════════════ -->
+<div id="modal-confirm" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="modal">
+    <div class="confirm-modal">
+      <div class="big-icon" role="img" aria-label="Peringatan">⚠️</div>
+      <h3 id="confirm-title">Konfirmasi Hapus</h3>
+      <p id="confirm-msg">Apakah Anda yakin?</p>
+      <div class="confirm-actions">
+        <button id="btn-confirm-cancel" class="btn btn-outline">Batal</button>
+        <button id="btn-confirm-ok"     class="btn btn-danger">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: DETAIL KEGIATAN
+     ══════════════════════════════════════════════════════ -->
+<div id="modal-detail" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+  <div class="modal modal-detail">
+    <div class="modal-head">
+      <h3 id="detail-title">Detail Kegiatan</h3>
+      <button id="btn-close-detail" class="btn-icon" aria-label="Tutup">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Info tanggal kegiatan -->
+      <div id="detail-kg-info" style="
+        font-size:13px; color:var(--clr-muted);
+        margin-bottom:12px; display:flex; flex-wrap:wrap; gap:4px;">
+      </div>
+      <!-- Statistik -->
+      <div id="detail-stats" class="stat-grid"></div>
+      <!-- Export bar -->
+      <div class="export-bar">
+        <button id="btn-export-csv" class="btn btn-outline btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+          </svg>
+          Unduh CSV
+        </button>
+        <button id="btn-export-pdf" class="btn btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0
+                     2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2 5h-1v3H8v-3H7l2.5-2.5L12
+                     14zm5 3h-3v-3h3v3zm0-4h-3V9h3v5z"/>
+          </svg>
+          Unduh PDF
+        </button>
+      </div>
+      <!-- Daftar hadir -->
+      <div id="detail-hadir-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ───────────────────────────────────────────── -->
+<header class="app-header admin-mode">
+  <div class="header-inner">
+    <div class="header-logo-wrap" id="header-logo-wrap">
+      <!-- Logo diganti via JS setelah setting dimuat -->
+      <img id="header-logo-img"
+           src="https://i.ibb.co.com/B2KQmpM1/logoMI-R.png"
+           alt="Logo"
+           style="width:40px;height:40px;object-fit:contain;"
+           onerror="this.style.display='none';document.getElementById('header-logo-fallback').style.display='flex';">
+      <svg id="header-logo-fallback" style="display:none;"
+           width="26" height="26" viewBox="0 0 24 24" fill="white">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26
+                 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28
+                 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+      </svg>
+    </div>
+    <div class="header-texts">
+      <div class="header-title" id="header-title">Panel Admin</div>
+      <div class="header-sub">Manajemen Daftar Hadir</div>
+    </div>
+    <div style="display:flex;gap:4px;">
+      <a href="index.html" class="header-btn" title="Lihat halaman tamu" aria-label="Halaman tamu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11
+                   11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0
+                   0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+        </svg>
+      </a>
+      <button id="btn-logout" class="header-btn" title="Logout" aria-label="Logout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4
+                   5h8V3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── ADMIN PANEL ───────────────────────────────────────── -->
+<main class="page wide" id="admin-panel" role="main" style="display:none;">
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar" role="tablist" aria-label="Menu admin">
+    <button class="tab-btn active" data-tab="kegiatan" role="tab" aria-selected="true" aria-controls="pane-kegiatan">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5C3.89 3 3 3.9 3 5L2.99 19A2
+                 2 0 0 0 5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1V1h-2z"/>
+      </svg>
+      Kegiatan
+    </button>
+    <button class="tab-btn" data-tab="tambah" role="tab" aria-selected="false" aria-controls="pane-tambah">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2
+                 2 0 0 0-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+      </svg>
+      Tambah Baru
+    </button>
+    <button class="tab-btn" data-tab="koneksi" role="tab" aria-selected="false" aria-controls="pane-koneksi">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93
+                 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 0 0-6 0zm-4-4
+                 l2 2a7.074 7.074 0 0 1 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+      </svg>
+      Koneksi GAS
+    </button>
+    <button class="tab-btn" data-tab="setting" role="tab" aria-selected="false" aria-controls="pane-setting">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94
+                 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61
+                 l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96a6.985 6.985
+                 0 0 0-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84
+                 c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94
+                 l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61
+                 l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58
+                 c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96
+                 c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84
+                 c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94
+                 l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61
+                 l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>
+      </svg>
+      Pengaturan
+    </button>
+  </nav>
+
+  <!-- ══ PANE: KEGIATAN ══════════════════════════════════ -->
+  <div id="pane-kegiatan" class="tab-pane active" role="tabpanel">
+    <div class="sec-title">
+      <h3>Daftar Kegiatan</h3>
+      <button id="btn-refresh" class="btn btn-primary btn-sm">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
+          <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 8
+                   8h-2a6 6 0 1 1-1.76-4.24l-2.24 2.24H22V4l-4.35 4.35z"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+    <div id="kegiatan-list">
+      <div class="no-data">Memuat data…</div>
+    </div>
+  </div>
+
+  <!-- ══ PANE: TAMBAH KEGIATAN ═══════════════════════════ -->
+  <div id="pane-tambah" class="tab-pane" role="tabpanel">
+    <div class="card">
+      <div class="card-head green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2
+                   2 0 0 0-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+        </svg>
+        <span>Tambah Kegiatan Baru</span>
+      </div>
+      <div class="card-body">
+        <form id="form-tambah" novalidate autocomplete="off">
+
+          <div class="form-group">
+            <label class="form-label" for="input-judul">
+              Judul Kegiatan <span class="required">*</span>
+            </label>
+            <input
+              type="text" id="input-judul" class="form-control"
+              placeholder="Contoh: Rapat Koordinasi Bulanan" required
+              autocapitalize="words"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="input-tanggal">
+                Tanggal <span class="required">*</span>
+              </label>
+              <input type="date" id="input-tanggal" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-waktu">Waktu Mulai</label>
+              <input type="time" id="input-waktu" class="form-control" value="08:00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-lokasi">Lokasi</label>
+            <input
+              type="text" id="input-lokasi" class="form-control"
+              placeholder="Contoh: Ruang Rapat, Aula"
+              autocapitalize="words"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-ket">Keterangan</label>
+            <textarea
+              id="input-ket" class="form-control"
+              placeholder="Keterangan tambahan (opsional)" rows="3"
+            ></textarea>
+          </div>
+
+          <button type="submit" id="btn-tambah" class="btn btn-primary btn-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+              <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2
+                       2 0 0 0-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+            </svg>
+            Simpan Kegiatan
+          </button>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANE: KONEKSI GAS ══════════════════════════════ -->
+  <div id="pane-koneksi" class="tab-pane" role="tabpanel">
+
+    <!-- Status koneksi saat ini -->
+    <div class="card">
+      <div class="card-head" style="background:#1967d2;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93
+                   7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 0 0-6 0zm-4-4
+                   l2 2a7.074 7.074 0 0 1 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+        </svg>
+        <span>Koneksi ke Google Apps Script</span>
+      </div>
+      <div class="card-body">
+
+        <!-- Indikator status -->
+        <div id="koneksi-status-bar" style="
+          display:flex; align-items:center; gap:10px;
+          padding:12px 14px; border-radius:8px; margin-bottom:18px;
+          background:var(--clr-bg); font-size:14px; font-weight:500;">
+          <span id="koneksi-dot" style="
+            width:10px; height:10px; border-radius:50%; flex-shrink:0;
+            background:#f29900;"></span>
+          <span id="koneksi-status-text">Mode Lokal — data tersimpan di browser ini.</span>
+        </div>
+
+        <!-- Form URL -->
+        <div class="form-group">
+          <label class="form-label" for="input-gas-url">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7c-1.71
+                       0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1
+                       3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 0 0 0-10z"/>
+            </svg>
+            URL Web App Google Apps Script
+          </label>
+          <input
+            type="url" id="input-gas-url" class="form-control"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            autocomplete="off" spellcheck="false"
+          >
+          <p id="url-status" style="font-size:12px;margin-top:6px;color:var(--clr-muted);">
+            Kosongkan untuk menggunakan mode lokal (localStorage).
+          </p>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <button id="btn-save-url" class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
+              <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0
+                       2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+            </svg>
+            Simpan URL
+          </button>
+          <button id="btn-test-url" class="btn btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52
+                       2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+            </svg>
+            Test Koneksi
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Panduan singkat -->
+    <div class="card">
+      <div class="card-head" style="background:#37474f;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10
+                   10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8
+                   8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1
+                   .9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5
+                   0-2.21-1.79-4-4-4z"/>
+        </svg>
+        <span>Cara Mendapatkan URL GAS</span>
+      </div>
+      <div class="card-body">
+        <ol style="font-size:14px;line-height:2;padding-left:18px;color:var(--clr-text);">
+          <li>Buka <a href="https://script.google.com" target="_blank" rel="noopener"
+              style="color:var(--clr-primary);text-decoration:underline;">
+              script.google.com</a> dan buat project baru</li>
+          <li>Salin isi file <code style="background:var(--clr-bg);padding:1px 5px;border-radius:4px;">gas/Code.gs</code>
+              ke editor GAS</li>
+          <li>Jalankan fungsi <code style="background:var(--clr-bg);padding:1px 5px;border-radius:4px;">init()</code>
+              untuk menyiapkan spreadsheet otomatis</li>
+          <li>Klik <strong>Deploy → New deployment</strong></li>
+          <li>Pilih tipe: <strong>Web App</strong></li>
+          <li>Set <em>Execute as</em>: <strong>Me</strong></li>
+          <li>Set <em>Who has access</em>: <strong>Anyone</strong></li>
+          <li>Klik <strong>Deploy</strong> → salin URL yang muncul</li>
+          <li>Paste URL di kolom di atas → klik <strong>Simpan URL</strong></li>
+        </ol>
+        <div style="
+          margin-top:14px; padding:12px; border-radius:8px;
+          background:#fff3e0; border-left:3px solid var(--clr-warn);
+          font-size:13px; line-height:1.7; color:#5d4037;">
+          <strong>⚠️ Penting:</strong> Setiap kali kode GAS diubah, buat
+          <em>deployment baru</em> (bukan edit yang lama). URL deployment lama
+          tetap berfungsi hingga Anda menghapusnya.
+        </div>
+      </div>
+    </div>
+
+    <!-- Setup & reset spreadsheet -->
+    <div class="card">
+      <div class="card-head orange">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1
+                   0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </svg>
+        <span>Setup Spreadsheet GAS</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:14px;color:var(--clr-muted);margin-bottom:14px;line-height:1.7;">
+          Buat struktur sheet (<strong>Setting</strong>, <strong>Kegiatan</strong>,
+          <strong>DataHadir</strong>) secara otomatis di Google Spreadsheet yang
+          terhubung. Aman dijalankan berulang kali — tidak menimpa data yang sudah ada.
+        </p>
+        <button id="btn-setup-gas" class="btn btn-outline btn-full">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1
+                     0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+          </svg>
+          Setup Spreadsheet
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /pane-koneksi -->
+
+  <!-- ══ PANE: PENGATURAN ════════════════════════════════ -->
+  <div id="pane-setting" class="tab-pane" role="tabpanel">
+
+    <!-- Form setting -->
+    <div class="card">
+      <div class="card-head">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94
+                   0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61
+                   l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96a6.985 6.985
+                   0 0 0-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84
+                   c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94
+                   l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61
+                   l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58
+                   c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96
+                   c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84
+                   c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94
+                   l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61
+                   l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>
+        </svg>
+        <span>Pengaturan Aplikasi</span>
+      </div>
+      <div class="card-body">
+        <form id="form-setting" autocomplete="off">
+
+          <div class="form-group">
+            <label class="form-label" for="setting-logo">URL Logo</label>
+            <input type="url" id="setting-logo" class="form-control"
+                   placeholder="https://..." autocomplete="off" spellcheck="false">
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+              <img id="setting-logo-preview"
+                   src="https://i.ibb.co.com/B2KQmpM1/logoMI-R.png"
+                   alt="preview logo"
+                   style="width:44px;height:44px;object-fit:contain;border-radius:6px;
+                          background:var(--clr-bg);border:1px solid var(--clr-border);padding:2px;">
+              <span style="font-size:12px;color:var(--clr-muted);">
+                Preview logo. Kosongkan untuk pakai logo default.
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-nama">Nama Sekolah / Instansi</label>
+            <input type="text" id="setting-nama" class="form-control"
+                   placeholder="Nama instansi Anda" autocapitalize="words">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-alamat">Alamat</label>
+            <input type="text" id="setting-alamat" class="form-control"
+                   placeholder="Alamat instansi">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-kota">Kota / Tempat</label>
+            <input type="text" id="setting-kota" class="form-control"
+                   placeholder="Contoh: Serang, Tangerang, Jakarta"
+                   autocapitalize="words">
+            <p style="font-size:12px;color:var(--clr-muted);margin-top:4px;">
+              Digunakan pada baris "Kota, Tanggal" di dokumen PDF.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-kepala">Kepala Madrasah</label>
+            <input type="text" id="setting-kepala" class="form-control"
+                   placeholder="Contoh: SAHRONI, S.Pd."
+                   autocapitalize="characters">
+            <p style="font-size:12px;color:var(--clr-muted);margin-top:4px;">
+              Nama lengkap + gelar. Selalu muncul di PDF (kolom kiri atau tengah).
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-pimpinan">Pimpinan Rapat</label>
+            <input type="text" id="setting-pimpinan" class="form-control"
+                   placeholder="Kosongkan jika tidak ada pimpinan rapat"
+                   autocapitalize="characters">
+            <p style="font-size:12px;color:var(--clr-muted);margin-top:4px;">
+              Jika diisi → muncul di kolom kanan PDF. Jika kosong → kolom ini disembunyikan.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-jabatan-list">Daftar Jabatan</label>
+            <textarea id="setting-jabatan-list" class="form-control"
+                      rows="10"
+                      placeholder="Satu jabatan per baris. Contoh:&#10;Kepala Sekolah&#10;Wakil Kepala&#10;Guru&#10;Staf TU"
+                      style="font-family:monospace;font-size:13px;resize:vertical;"></textarea>
+            <p style="font-size:12px;color:var(--clr-muted);margin-top:6px;line-height:1.6;">
+              Satu jabatan per baris. Jabatan berawalan <strong>Wakabid</strong> otomatis dikelompokkan bersama.<br>
+              Urutan di sini = urutan di dropdown &amp; PDF.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-pass">Password Admin Baru</label>
+            <input type="password" id="setting-pass" class="form-control"
+                   placeholder="Kosongkan jika tidak ingin mengubah"
+                   autocomplete="new-password">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Warna Tema</label>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input type="color" id="setting-warna"
+                     style="width:48px;height:40px;border:none;cursor:pointer;border-radius:6px;padding:2px;">
+              <input type="text" id="setting-warna-hex" class="form-control"
+                     placeholder="#1a73e8" style="flex:1;"
+                     maxlength="7" aria-label="Kode warna hex">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="white">
+              <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0
+                       2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+            </svg>
+            Simpan Pengaturan
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Backup & Restore -->
+    <div class="card">
+      <div class="card-head orange">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M20 6h-2.18c.07-.44.18-.88.18-1a4 4 0 0 0-8 0c0 .12.11.56.18
+                   1H8c-1.1 0-1.99.9-1.99 2L6 19a2 2 0 0 0 2 2h12a2 2 0 0 0
+                   2-2V8a2 2 0 0 0-2-2zm-6 0h-4c-.55 0-1-.45-1-1s.45-1 1-1h4c.55
+                   0 1 .45 1 1s-.45 1-1 1zm0 10h-4v-4H7l5-5 5 5h-3v4z"/>
+        </svg>
+        <span>Backup &amp; Restore Data</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:14px;color:var(--clr-muted);margin-bottom:16px;line-height:1.7;">
+          Cache lokal tersimpan di browser ini (<strong>localStorage</strong>).
+          Jika menggunakan mode GAS, data utama ada di Google Spreadsheet — backup ini
+          menyimpan cache lokal beserta URL konfigurasi GAS.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="btn-backup" class="btn btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Unduh Backup (JSON)
+          </button>
+          <button id="btn-restore" class="btn btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+                    transform="scale(1,-1) translate(0,-24)"/>
+              <path d="M5 18v2h14v-2H5z"/>
+            </svg>
+            Pulihkan dari Backup
+          </button>
+          <input type="file" id="input-restore" accept=".json" style="display:none;" aria-hidden="true">
+        </div>
+        <p style="font-size:12px;color:var(--clr-muted);margin-top:12px;">
+          ⚠️ Memulihkan backup akan <strong>menimpa</strong> semua data yang ada saat ini.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /pane-setting -->
+
+<!-- ── MODAL: EDIT KEGIATAN ──────────────────────────────── -->
+<div id="modal-edit" class="modal-backdrop hidden"
+     role="dialog" aria-modal="true" aria-labelledby="edit-title">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="edit-title">Edit Kegiatan</h3>
+      <button class="btn-icon" id="btn-close-edit" aria-label="Tutup">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-edit" novalidate autocomplete="off">
+        <input type="hidden" id="edit-id">
+
+        <div class="form-group">
+          <label class="form-label" for="edit-judul">
+            Judul Kegiatan <span class="required">*</span>
+          </label>
+          <input type="text" id="edit-judul" class="form-control"
+                 placeholder="Judul kegiatan" required autocapitalize="words">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="edit-tanggal">
+              Tanggal <span class="required">*</span>
+            </label>
+            <input type="date" id="edit-tanggal" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-waktu">Waktu Mulai</label>
+            <input type="time" id="edit-waktu" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-lokasi">Lokasi</label>
+          <input type="text" id="edit-lokasi" class="form-control"
+                 placeholder="Ruang Rapat, Aula, dll." autocapitalize="words">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-ket">Keterangan</label>
+          <textarea id="edit-ket" class="form-control" rows="3"
+                    placeholder="Keterangan tambahan (opsional)"></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button type="submit" id="btn-simpan-edit" class="btn btn-primary" style="flex:1;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+              <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0
+                       2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+            </svg>
+            Simpan Perubahan
+          </button>
+          <button type="button" id="btn-batal-edit" class="btn btn-outline">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ── FOOTER ───────────────────────────────────────────── -->
+<footer class="app-footer">
+  <p>Panel Admin — Daftar Hadir Digital &copy; <span id="year"></span></p>
+</footer>
+
+<!-- ── SCRIPTS ──────────────────────────────────────────── -->
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/db.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/admin.js"></script>
+
+</body>
+</html>
