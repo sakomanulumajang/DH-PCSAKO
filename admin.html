@@ -18,8 +18,41 @@
 
 <!-- ── LOADING ──────────────────────────────────────────── -->
 <div id="loading-overlay">
-  <div class="spinner"></div>
-  <p>Memuat panel admin…</p>
+  <!-- Langit & awan -->
+  <div class="sm-sky">
+    <div class="sm-cloud sm-cloud-1"></div>
+    <div class="sm-cloud sm-cloud-2"></div>
+    <div class="sm-cloud sm-cloud-3"></div>
+  </div>
+
+  <!-- Superman terbang -->
+  <div class="sm-hero-wrap">
+    <div class="sm-cape"></div>
+    <div class="sm-hero">
+      <div class="sm-body">
+        <div class="sm-arm-fwd"></div>
+        <div class="sm-head">
+          <div class="sm-hair"></div>
+          <div class="sm-face">
+            <div class="sm-eye sm-eye-l"></div>
+            <div class="sm-eye sm-eye-r"></div>
+            <div class="sm-mouth"></div>
+          </div>
+        </div>
+        <div class="sm-torso">
+          <div class="sm-emblem"><span>S</span></div>
+        </div>
+        <div class="sm-arm-back"></div>
+        <div class="sm-leg sm-leg-l"></div>
+        <div class="sm-leg sm-leg-r"></div>
+      </div>
+    </div>
+    <div class="sm-trail sm-trail-1"></div>
+    <div class="sm-trail sm-trail-2"></div>
+    <div class="sm-trail sm-trail-3"></div>
+  </div>
+
+  <p class="sm-text">Memuat panel admin…</p>
 </div>
 
 <!-- ── TOAST ────────────────────────────────────────────── -->
@@ -127,7 +160,7 @@
     <div class="header-logo-wrap" id="header-logo-wrap">
       <!-- Logo diganti via JS setelah setting dimuat -->
       <img id="header-logo-img"
-           src="https://i.ibb.co.com/B2KQmpM1/logoMI-R.png"
+           src="https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png"
            alt="Logo"
            style="width:40px;height:40px;object-fit:contain;"
            onerror="this.style.display='none';document.getElementById('header-logo-fallback').style.display='flex';">
@@ -150,6 +183,22 @@
                    0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
         </svg>
       </a>
+      <!-- Tombol Dark/Light Mode -->
+      <button id="btn-theme-toggle" class="header-btn" title="Ganti tema" aria-label="Ganti mode gelap/terang">
+        <svg id="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+          <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26
+                   5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
+        <svg id="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1
+                   1 0 0 1 1-1zm0 18a1 1 0 0 1 1 1v-2a1 1 0 0 1-2 0v2a1 1 0 0 1 1-1zm7.07-14.07a1
+                   1 0 0 1 0 1.41l-1.41 1.42a1 1 0 1 1-1.42-1.42l1.42-1.41a1 1 0 0 1 1.41 0zM6.34
+                   17.66a1 1 0 0 1 0 1.41l-1.41 1.42a1 1 0 1 1-1.42-1.42l1.42-1.41a1 1 0 0 1 1.41
+                   0zM21 11h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0-2zM5 11H3a1 1 0 0 0 0 2h2a1 1 0 0 0
+                   0-2zm13.66-6.34a1 1 0 0 1 1.41 1.41l-1.41 1.42a1 1 0 1 1-1.42-1.42l1.42-1.41zM6.34
+                   6.34a1 1 0 0 1 0 1.41L4.93 9.17a1 1 0 1 1-1.42-1.42l1.42-1.41a1 1 0 0 1 1.41 0z"/>
+        </svg>
+      </button>
       <button id="btn-logout" class="header-btn" title="Logout" aria-label="Logout">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4
@@ -453,7 +502,7 @@
                    placeholder="https://..." autocomplete="off" spellcheck="false">
             <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
               <img id="setting-logo-preview"
-                   src="https://i.ibb.co.com/B2KQmpM1/logoMI-R.png"
+                   src="https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png"
                    alt="preview logo"
                    style="width:44px;height:44px;object-fit:contain;border-radius:6px;
                           background:var(--clr-bg);border:1px solid var(--clr-border);padding:2px;">
@@ -530,7 +579,7 @@
               <input type="color" id="setting-warna"
                      style="width:48px;height:40px;border:none;cursor:pointer;border-radius:6px;padding:2px;">
               <input type="text" id="setting-warna-hex" class="form-control"
-                     placeholder="#1a73e8" style="flex:1;"
+                     placeholder="#9e5400" style="flex:1;"
                      maxlength="7" aria-label="Kode warna hex">
             </div>
           </div>
@@ -656,11 +705,45 @@
 </footer>
 
 <!-- ── SCRIPTS ──────────────────────────────────────────── -->
+<!-- Theme init: jalankan SEBELUM scripts lain agar tidak flash -->
+<script>
+(function() {
+  var saved = localStorage.getItem('dh_theme');
+  if (!saved) {
+    saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.classList.add(saved);
+})();
+</script>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/db.js"></script>
 <script src="js/pdf.js"></script>
 <script src="js/admin.js"></script>
+<!-- Theme toggle logic -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var btn    = document.getElementById('btn-theme-toggle');
+  var htmlEl = document.documentElement;
+  function applyThemeIcons() {
+    var isDark = htmlEl.classList.contains('dark');
+    var moon   = document.getElementById('icon-moon');
+    var sun    = document.getElementById('icon-sun');
+    if (moon) moon.style.display = isDark ? 'block' : 'none';
+    if (sun)  sun.style.display  = isDark ? 'none'  : 'block';
+  }
+  if (btn) {
+    applyThemeIcons();
+    btn.addEventListener('click', function () {
+      var isDark = htmlEl.classList.contains('dark');
+      htmlEl.classList.remove('dark', 'light');
+      htmlEl.classList.add(isDark ? 'light' : 'dark');
+      localStorage.setItem('dh_theme', isDark ? 'light' : 'dark');
+      applyThemeIcons();
+    });
+  }
+});
+</script>
 
 </body>
 </html>

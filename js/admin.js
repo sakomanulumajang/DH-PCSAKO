@@ -257,7 +257,7 @@ function renderModeBadge() {
 
 /* ── LOGO ────────────────────────────────────────────────── */
 function applyLogo(setting) {
-  const LOGO_DEFAULT = 'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png';
+  const LOGO_DEFAULT = 'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png';
   const url = (setting?.logo_url || '').trim() || LOGO_DEFAULT;
   const img = document.getElementById('header-logo-img');
   const svg = document.getElementById('header-logo-fallback');
@@ -689,7 +689,7 @@ async function loadSettingForm() {
     document.getElementById('setting-kota').value     = s.kota            || '';
     document.getElementById('setting-kepala').value   = s.kepala_madrasah || '';
     document.getElementById('setting-pimpinan').value = s.pimpinan_rapat  || '';
-    const warna = s.warna_primer || '#1a73e8';
+    const warna = s.warna_primer || '#9e5400';
     document.getElementById('setting-warna').value     = warna;
     document.getElementById('setting-warna-hex').value = warna;
     // Jabatan list

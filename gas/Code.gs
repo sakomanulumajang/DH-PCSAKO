@@ -263,12 +263,27 @@ function handleSaveSetting(body, cb) {
   var allowed = [
     'nama_sekolah', 'alamat', 'kota',
     'warna_primer', 'logo_url', 'kepala_madrasah', 'pimpinan_rapat',
-    'app_version', 'jabatan_list'
+    'app_version'
   ];
   if (body.new_password) updateSettingKey('admin_password', body.new_password);
   allowed.forEach(function(key) {
-    if (body[key] !== undefined) updateSettingKey(key, body[key]);
+    if (body[key] !== undefined) updateSettingKey(key, String(body[key]));
   });
+
+  // jabatan_list: terima JSON array string ATAU newline-separated string
+  // Simpan ke sheet sebagai newline-separated plain text supaya mudah diedit manual
+  if (body.jabatan_list !== undefined) {
+    var jabVal = body.jabatan_list;
+    // Jika dikirim sebagai JSON array: ["Guru","Operator",...]
+    if (typeof jabVal === 'string' && jabVal.trim().startsWith('[')) {
+      try {
+        var arr = JSON.parse(jabVal);
+        if (Array.isArray(arr)) jabVal = arr.join('\n');
+      } catch(e) { /* biarkan apa adanya */ }
+    }
+    updateSettingKey('jabatan_list', String(jabVal));
+  }
+
   return okResponse({ message: 'Pengaturan disimpan' }, cb);
 }
 
@@ -283,10 +298,20 @@ function handleSetup(body, cb) {
 function getSetting() {
   var sh = getSheet(SHEET_SETTING);
   if (!sh) return defaultSetting();
-  var data   = sh.getDataRange().getValues();
-  var result = defaultSetting();
+  var data    = sh.getDataRange().getValues();
+  var result  = defaultSetting();
+  var keysInSheet = {};
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) result[String(data[i][0])] = data[i][1];
+    var k = String(data[i][0] || '').trim();
+    var v = data[i][1];
+    if (!k) continue;
+    // Nilai dari sheet selalu menang atas default
+    result[k] = (v === null || v === undefined) ? '' : v;
+    keysInSheet[k] = true;
+  }
+  // Auto-migrate: jika jabatan_list belum ada di sheet, tambahkan sekarang
+  if (!keysInSheet['jabatan_list']) {
+    updateSettingKey('jabatan_list', result.jabatan_list);
   }
   return result;
 }
@@ -297,12 +322,12 @@ function defaultSetting() {
     alamat:          'Jl. Contoh No. 1, Kota Anda',
     kota:            '',
     admin_password:  'admin123',
-    warna_primer:    '#1a73e8',
-    logo_url:        'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png',
+    warna_primer:    '#9e5400',
+    logo_url:        'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png',
     kepala_madrasah: 'SAHRONI, S.Pd.',
     pimpinan_rapat:  '',
     app_version:     '2.0.0',
-    jabatan_list:    'Pengawas Madrasah\nKepala Madrasah\nWakabid Kurikulum\nWakabid Kesiswaan\nWakabid Sarana Prasarana\nWakabid Keuangan\nWakabid Humas\nGuru\nOperator\nKaryawan\nGuru Bantu'
+    jabatan_list:    'Mabi Sako\nKetua Sako\nSekretaris Sako\nWakil Sekretaris\nWakabidang\nAnggota\nDewan Kerja'
   };
 }
 
@@ -505,12 +530,12 @@ function _setupSetting(ss) {
     ['nama_sekolah',    'Sekolah / Instansi Anda'],
     ['alamat',          'Jl. Contoh No. 1, Kota Anda'],
     ['kota',            'Kota Anda'],
-    ['warna_primer',    '#099b46'],
-    ['logo_url',        'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png'],
+    ['warna_primer',    '#9e5400'],
+    ['logo_url',        'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png'],
     ['kepala_madrasah', 'SAHRONI, S.Pd.'],
     ['pimpinan_rapat',  ''],
     ['app_version',     '2.0.0'],
-    ['jabatan_list',    'Pengawas Madrasah\nKepala Madrasah\nWakabid Kurikulum\nWakabid Kesiswaan\nWakabid Sarana Prasarana\nWakabid Keuangan\nWakabid Humas\nGuru\nOperator\nKaryawan\nGuru Bantu']
+    ['jabatan_list',    'Mabi Sako\nKetua Sako\nSekretaris Sako\nWakil Sekretaris\nWakabidang\nAnggota\nDewan Kerja']
   ];
   sh.getRange(2, 1, defaults.length, 2).setValues(defaults);
   sh.setColumnWidth(1, 200);

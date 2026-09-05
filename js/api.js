@@ -169,7 +169,15 @@ const GasAPI = (() => {
   }
 
   async function saveSetting(password, data) {
-    return request({ action: 'saveSetting', password, ...data });
+    // jabatan_list berisi newline yang tidak aman di query string.
+    // Kirim sebagai JSON array string agar URL-encoding aman.
+    const payload = { ...data };
+    if (typeof payload.jabatan_list === 'string' && payload.jabatan_list.includes('\n')) {
+      const arr = payload.jabatan_list
+        .split('\n').map(s => s.trim()).filter(Boolean);
+      payload.jabatan_list = JSON.stringify(arr);
+    }
+    return request({ action: 'saveSetting', password, ...payload });
   }
 
   async function setup(password) {

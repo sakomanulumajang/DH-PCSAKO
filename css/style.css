@@ -8,8 +8,8 @@
 
 /* ── TOKENS ────────────────────────────────────────────────── */
 :root {
-  --clr-primary:      #1a73e8;
-  --clr-primary-dk:   #1557b0;
+  --clr-primary:      #9e5400;
+  --clr-primary-dk:   #7a4000;
   --clr-green:        #34a853;
   --clr-green-dk:     #0d652d;
   --clr-danger:       #d93025;
@@ -44,25 +44,328 @@ body {
 a { color: inherit; text-decoration: none; }
 button { font-family: var(--font); }
 
-/* ── LOADING OVERLAY ───────────────────────────────────────── */
+/* ── LOADING OVERLAY — Superman Terbang ───────────────────── */
 #loading-overlay {
   position: fixed; inset: 0; z-index: 9000;
-  background: rgba(255,255,255,.94);
+  background: linear-gradient(180deg, #87CEEB 0%, #b8e4f9 50%, #dff4ff 100%);
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 14px;
-  backdrop-filter: blur(3px);
-  transition: opacity .3s;
+  align-items: center; justify-content: center; gap: 0;
+  overflow: hidden;
+  transition: opacity .4s ease;
 }
 #loading-overlay.hidden { opacity: 0; pointer-events: none; }
-.spinner {
-  width: 44px; height: 44px;
-  border: 4px solid var(--clr-border);
-  border-top-color: var(--clr-primary);
-  border-radius: 50%;
-  animation: spin .75s linear infinite;
+
+/* Langit */
+.sm-sky {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-#loading-overlay p { font-size: 14px; color: var(--clr-muted); }
+
+/* Awan */
+.sm-cloud {
+  position: absolute;
+  background: #fff;
+  border-radius: 50px;
+  opacity: .85;
+}
+.sm-cloud::before, .sm-cloud::after {
+  content: ''; position: absolute;
+  background: #fff; border-radius: 50%;
+}
+
+.sm-cloud-1 {
+  width: 90px; height: 28px;
+  top: 18%; left: -120px;
+  animation: cloudDrift 5s linear 0s infinite;
+}
+.sm-cloud-1::before { width: 44px; height: 44px; top: -22px; left: 10px; }
+.sm-cloud-1::after  { width: 30px; height: 30px; top: -14px; left: 40px; }
+
+.sm-cloud-2 {
+  width: 70px; height: 22px;
+  top: 38%; left: -100px;
+  opacity: .6;
+  animation: cloudDrift 7s linear 1.5s infinite;
+}
+.sm-cloud-2::before { width: 34px; height: 34px; top: -17px; left: 8px; }
+.sm-cloud-2::after  { width: 24px; height: 24px; top: -11px; left: 34px; }
+
+.sm-cloud-3 {
+  width: 110px; height: 32px;
+  top: 62%; left: -140px;
+  animation: cloudDrift 6s linear 3s infinite;
+}
+.sm-cloud-3::before { width: 50px; height: 50px; top: -26px; left: 14px; }
+.sm-cloud-3::after  { width: 36px; height: 36px; top: -17px; left: 54px; }
+
+@keyframes cloudDrift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 160px)); }
+}
+
+/* ── Wrapper hero — terbang melintasi layar ─── */
+/*
+ * Pose terbang klasik Superman:
+ * Tubuh HORIZONTAL — kepala di kiri, kaki di kanan.
+ * Tangan kanan menjulur lurus ke depan (kiri layar).
+ * Kaki lurus ke belakang (kanan layar), sejajar tubuh.
+ * Jubah merah berkibar ke belakang.
+ *
+ * Struktur (kiri → kanan):
+ *   [tangan-fwd] [kepala] [torso] [kaki] [jubah] [trail]
+ */
+.sm-hero-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: heroFly 2.6s ease-in-out infinite alternate;
+  margin-bottom: 36px;
+  filter: drop-shadow(0 6px 20px rgba(0,0,50,.28));
+}
+@keyframes heroFly {
+  0%   { transform: translateY(2px)   rotate(-2deg); }
+  50%  { transform: translateY(-16px) rotate(1deg);  }
+  100% { transform: translateY(5px)   rotate(-3deg); }
+}
+
+/* ── Cape (jubah) berkibar ke belakang ─── */
+.sm-cape {
+  position: absolute;
+  /* tepat di belakang torso: kanan tubuh */
+  right: 28px; top: 8px;
+  width: 58px; height: 32px;
+  background: linear-gradient(90deg, #b71c1c 0%, #d50000 40%, #ef9a9a 100%);
+  border-radius: 4px 50px 50px 4px;
+  transform-origin: left center;
+  animation: capeFlap 0.55s ease-in-out infinite alternate;
+  z-index: 0;
+}
+@keyframes capeFlap {
+  from { transform: skewY(-4deg) scaleY(1)   translateX(0);    }
+  to   { transform: skewY(5deg)  scaleY(.84) translateX(4px);  }
+}
+
+/* ── Hero body container ─── */
+.sm-hero {
+  position: relative; z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/*
+ * Seluruh .sm-body dirotasi 0° — elemen di dalamnya
+ * disusun secara absolut dalam koordinat HORIZONTAL.
+ * Lebar total: tangan(30) + kepala(38) + torso(46) + kaki(44) = ~158px
+ * Tinggi: 44px (diameter kepala)
+ */
+.sm-body {
+  position: relative;
+  width: 158px;
+  height: 44px;
+}
+
+/* ── Tangan depan lurus (menjulur ke kiri / arah terbang) ─── */
+.sm-arm-fwd {
+  position: absolute;
+  left: 0; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 14px;
+  background: linear-gradient(90deg, #d50000 0%, #1565C0 55%);
+  border-radius: 8px 4px 4px 8px;
+  z-index: 3;
+}
+/* kepalan tinju di ujung depan */
+.sm-arm-fwd::before {
+  content: '';
+  position: absolute;
+  left: -10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px;
+  background: #d50000;
+  border-radius: 50% 40% 40% 50%;
+}
+/* lengan sisi kepala muncul sedikit */
+.sm-arm-fwd::after {
+  content: '';
+  position: absolute;
+  right: -2px; top: -3px;
+  width: 14px; height: 20px;
+  background: #1565C0;
+  border-radius: 50%;
+  z-index: -1;
+}
+
+/* ── Kepala ─── */
+.sm-head {
+  position: absolute;
+  left: 26px; top: 50%; transform: translateY(-50%);
+  width: 38px; height: 38px;
+  background: #FFCC80;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 4;
+  /* kepala sedikit menengadah ke depan */
+}
+/* Rambut: bagian atas kepala */
+.sm-hair {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 16px;
+  background: #1a237e;
+  border-radius: 50% 50% 0 0;
+}
+/* curl signature Superman */
+.sm-hair::after {
+  content: '';
+  position: absolute;
+  bottom: -5px; left: 12px;
+  width: 11px; height: 11px;
+  background: #1a237e;
+  border-radius: 50%;
+}
+.sm-face {
+  position: absolute;
+  top: 16px; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sm-eye {
+  position: absolute;
+  top: 2px;
+  width: 6px; height: 5px;
+  background: #1565C0;
+  border-radius: 50%;
+}
+.sm-eye-l { left: 6px; }
+.sm-eye-r { right: 6px; }
+.sm-mouth {
+  position: absolute;
+  bottom: 5px; left: 50%; transform: translateX(-50%);
+  width: 11px; height: 4px;
+  border-bottom: 2px solid #bf5c00;
+  border-radius: 0 0 50% 50%;
+}
+
+/* ── Torso ─── */
+.sm-torso {
+  position: absolute;
+  left: 58px; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 36px;
+  background: linear-gradient(180deg, #1565C0 0%, #0D47A1 100%);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+/* Sabuk kuning — garis horisontal di bawah torso */
+.sm-torso::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 6px;
+  background: #FFD600;
+  border-radius: 0 0 5px 5px;
+}
+
+/* ── Emblem S ─── */
+.sm-emblem {
+  width: 22px; height: 22px;
+  background: #FFD600;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; top: -3px;
+}
+.sm-emblem span {
+  font-family: Georgia, serif;
+  font-size: 13px; font-weight: 900; font-style: italic;
+  color: #d50000; line-height: 1;
+  text-shadow: 0 1px 0 rgba(0,0,0,.28);
+}
+
+/* ── Celana + Kaki lurus ke belakang ─── */
+/* Kaki disusun sejajar horizontal di kanan torso */
+.sm-leg {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  height: 16px;
+  background: linear-gradient(90deg, #0D47A1 0%, #1565C0 100%);
+  border-radius: 4px;
+}
+.sm-leg-l {
+  left: 102px;
+  width: 28px;
+  top: calc(50% - 10px); transform: none;
+  border-radius: 4px 6px 6px 4px;
+}
+.sm-leg-r {
+  left: 102px;
+  width: 28px;
+  top: calc(50% + 2px); transform: none;
+  border-radius: 4px 6px 6px 4px;
+}
+/* Sepatu merah di ujung kaki */
+.sm-leg-l::after, .sm-leg-r::after {
+  content: '';
+  position: absolute;
+  right: -8px; top: -1px;
+  width: 12px; height: 18px;
+  background: #d50000;
+  border-radius: 2px 8px 8px 2px;
+}
+
+/* Tangan belakang — tersembunyi rapat di sisi tubuh */
+.sm-arm-back {
+  position: absolute;
+  left: 68px; top: calc(50% + 8px);
+  width: 34px; height: 11px;
+  background: #0D47A1;
+  border-radius: 4px 8px 8px 4px;
+  opacity: .75;
+  z-index: 1;
+}
+
+/* ── Efek speed trail di belakang ─── */
+.sm-trail {
+  position: absolute;
+  /* trail muncul di kanan hero-wrap (arah belakang terbang) */
+  right: -14px;
+  height: 3px;
+  background: rgba(255,255,255,.75);
+  border-radius: 4px;
+  animation: trailFade 0.48s ease-in-out infinite alternate;
+}
+.sm-trail-1 { width: 44px; top: calc(50% - 8px); animation-delay: 0s;    }
+.sm-trail-2 { width: 30px; top: calc(50% + 0px); animation-delay: .14s;  }
+.sm-trail-3 { width: 18px; top: calc(50% + 8px); animation-delay: .28s;  }
+
+@keyframes trailFade {
+  from { opacity: .85; transform: scaleX(1);   }
+  to   { opacity: .15; transform: scaleX(.5);  }
+}
+
+/* Teks loading */
+.sm-text {
+  position: relative; z-index: 2;
+  font-size: 15px; font-weight: 600;
+  color: #0d47a1;
+  letter-spacing: .3px;
+  text-shadow: 0 1px 3px rgba(255,255,255,.8);
+  animation: textPulse 1.4s ease-in-out infinite alternate;
+}
+@keyframes textPulse {
+  from { opacity: .7; }
+  to   { opacity: 1; }
+}
+
+/* Sembunyikan .spinner lama jika masih ada di tempat lain */
+.spinner { display: none !important; }
+#loading-overlay > p:not(.sm-text) { display: none !important; }
+
+/* Dark mode: langit sore/malam */
+@media (prefers-color-scheme: dark) {
+  #loading-overlay {
+    background: linear-gradient(180deg, #0d1b3e 0%, #1a2a6c 45%, #2c3e6b 100%);
+  }
+  .sm-cloud { opacity: .25; }
+  .sm-text { color: #90caf9; text-shadow: 0 0 12px rgba(66,165,245,.6); }
+  .sm-trail { background: rgba(144,202,249,.7); }
+}
 
 /* ── TOAST ─────────────────────────────────────────────────── */
 #toast-container {
@@ -486,7 +789,60 @@ textarea.form-control { resize: vertical; min-height: 76px; }
   .page { padding: 24px 16px 64px; }
 }
 
-/* ── DARK MODE ─────────────────────────────────────────────── */
+/* ── DARK MODE — manual override via [data-theme="dark"] ─── */
+/* Sistem auto (prefers-color-scheme) tetap berlaku sebagai default.    */
+/* Jika user klik toggle, class 'dark' ditambah ke <html>.              */
+
+/* LIGHT paksa (override dark-os) */
+html.light {
+  --clr-bg:      #f0f4f8;
+  --clr-surface: #ffffff;
+  --clr-text:    #202124;
+  --clr-muted:   #5f6368;
+  --clr-border:  #dadce0;
+}
+html.light body                   { background: var(--clr-bg); }
+html.light .form-control          { background: #fff; color: var(--clr-text); border-color: var(--clr-border); }
+html.light .form-control::placeholder { color: #bdc1c6; }
+html.light .sig-wrap              { background: #fafafa; }
+html.light .modal,
+html.light .modal-head            { background: #fff; }
+html.light .tab-bar, html.light .card { background: #fff; }
+html.light .tab-btn:hover         { background: var(--clr-bg); }
+html.light .kg-admin-item         { background: #fff; }
+html.light .stat-card             { background: var(--clr-bg); }
+html.light #loading-overlay       { background: linear-gradient(180deg,#87CEEB 0%,#b8e4f9 50%,#dff4ff 100%); }
+
+/* DARK paksa (override light-os) */
+html.dark {
+  --clr-bg:      #111827;
+  --clr-surface: #1f2937;
+  --clr-text:    #e5e7eb;
+  --clr-muted:   #9ca3af;
+  --clr-border:  #374151;
+}
+html.dark body                    { background: var(--clr-bg); }
+html.dark .form-control           { background: #111827; color: var(--clr-text); border-color: var(--clr-border); }
+html.dark .form-control::placeholder { color: #4b5563; }
+html.dark .sig-wrap               { background: #111827; }
+html.dark .modal,
+html.dark .modal-head             { background: var(--clr-surface); }
+html.dark .tab-bar, html.dark .card { background: var(--clr-surface); }
+html.dark .tab-btn:hover          { background: var(--clr-bg); }
+html.dark .kg-admin-item          { background: var(--clr-surface); }
+html.dark .stat-card              { background: #111827; }
+html.dark #loading-overlay        { background: linear-gradient(180deg,#0d1b3e 0%,#1a2a6c 45%,#2c3e6b 100%); }
+html.dark .sm-cloud               { opacity: .22; }
+html.dark .sm-text                { color: #90caf9; text-shadow: 0 0 12px rgba(66,165,245,.6); }
+html.dark .sm-trail               { background: rgba(144,202,249,.7); }
+html.dark .success-detail         { background: var(--clr-bg); }
+
+/* Tombol toggle: ikon bulan muncul di mode terang, ikon matahari di mode gelap */
+html.dark  #icon-moon { display: block !important; }
+html.dark  #icon-sun  { display: none  !important; }
+html.light #icon-moon { display: none  !important; }
+html.light #icon-sun  { display: block !important; }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --clr-bg:      #111827;
@@ -506,7 +862,10 @@ textarea.form-control { resize: vertical; min-height: 76px; }
   .kg-admin-item { background: var(--clr-surface); }
   .stat-card { background: #111827; }
   .success-detail, .kg-meta-row .lbl { color: var(--clr-muted); }
-  #loading-overlay { background: rgba(17,24,39,.94); }
+  #loading-overlay { background: linear-gradient(180deg,#0d1b3e 0%,#1a2a6c 45%,#2c3e6b 100%); }
+  /* default icon state di dark-OS: tampilkan bulan, sembunyikan matahari */
+  #icon-moon { display: block !important; }
+  #icon-sun  { display: none  !important; }
 }
 
 /* ── PRINT ─────────────────────────────────────────────────── */

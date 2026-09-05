@@ -57,12 +57,12 @@ const DB = (() => {
     alamat:          'Jl. Contoh No. 1, Kota Anda',
     kota:            '',
     admin_password:  'admin123',
-    warna_primer:    '#1a73e8',
-    logo_url:        'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png',
+    warna_primer:    '#9e5400',
+    logo_url:        'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png',
     kepala_madrasah: 'SAHRONI, S.Pd.',
     pimpinan_rapat:  '',
     app_version:     '2.0.0',
-    jabatan_list:    'Pengawas Madrasah\nKepala Madrasah\nWakabid Kurikulum\nWakabid Kesiswaan\nWakabid Sarana Prasarana\nWakabid Keuangan\nWakabid Humas\nGuru\nOperator\nKaryawan\nGuru Bantu'
+    jabatan_list:    'Mabi Sako\nKetua Sako\nSekretaris Sako\nWakil Sekretaris\nWakabidang\nAnggota\nDewan Kerja'
   };
 
   /* ══════════════════════════════════════════════════════════

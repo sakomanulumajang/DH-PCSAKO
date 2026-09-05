@@ -55,102 +55,84 @@ async function loadPage() {
 }
 
 /* ── POPULATE JABATAN DROPDOWN ───────────────────────────── */
+
+// Fallback hardcode — dipakai jika setting.jabatan_list kosong / belum ada
+const DEFAULT_JABATAN_LIST = [
+  'Mabi Sako', 'Ketua Sako', 'Sekretaris Sako', 'Wakil Sekretaris',
+  'Wakabidang', 'Anggota', 'Dewan Kerja'
+];
+
 /**
  * Isi <select id="input-jabatan"> dari setting.jabatan_list.
- * Format jabatan_list: satu jabatan per baris.
- * Jabatan berawalan "Wakabid" dikelompokkan ke optgroup "Pimpinan / Wakabid",
- * sisanya ke optgroup "Tenaga Pendidik & Kependidikan".
- * Jika setting tidak mengandung jabatan_list, fallback ke daftar default.
+ * Format jabatan_list bisa berupa:
+ *   - String newline-separated  : "Guru\nOperator\nKaryawan"
+ *   - JSON array string         : '["Guru","Operator","Karyawan"]'
+ *   - Array langsung            : ['Guru','Operator']
+ * Jika kosong → pakai DEFAULT_JABATAN_LIST.
+ * Jabatan berawalan "Wakabid" + "Pengawas/Kepala Madrasah" → optgroup "Pimpinan".
+ * Sisanya → optgroup "Anggota Pengurus".
+ * Jika semua masuk satu bucket → tampilkan tanpa optgroup.
  */
 function populateJabatan(setting) {
   const sel = document.getElementById('input-jabatan');
   if (!sel) return;
 
-  const raw  = String(setting?.jabatan_list || '');
-  const list = raw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  // ── Parse jabatan_list dari berbagai format ──────────────
+  let list = [];
+  const raw = setting?.jabatan_list;
 
-  // Hapus semua opsi kecuali placeholder
+  if (Array.isArray(raw)) {
+    list = raw.map(s => String(s).trim()).filter(Boolean);
+  } else if (typeof raw === 'string' && raw.trim()) {
+    const trimmed = raw.trim();
+    // Coba parse sebagai JSON array
+    if (trimmed.startsWith('[')) {
+      try { list = JSON.parse(trimmed).map(s => String(s).trim()).filter(Boolean); } catch {}
+    }
+    // Newline-separated (termasuk \r\n dari Windows)
+    if (!list.length) {
+      list = trimmed.split(/\r?\n/).map(s => s.trim()).filter(s => s && !/^[-=]{3,}$/.test(s));
+    }
+  }
+
+  // Fallback ke default jika masih kosong
+  if (!list.length) list = [...DEFAULT_JABATAN_LIST];
+
+  // ── Rebuild dropdown ─────────────────────────────────────
   sel.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
 
-  if (!list.length) return;
+  const grpPimpinan = [];
+  const grpLainnya  = [];
 
-  // Kelompokkan: baris kosong (diawali "-") bisa jadi pemisah group,
-  // atau otomatis: Wakabid masuk kelompok pertama, sisanya kelompok kedua.
-  // Strategi: scan urutan → setiap jabatan langsung jadi <option> dalam
-  // satu optgroup sesuai kata pertama "Wakabid", atau per-blok.
-  //
-  // Implementasi sederhana & fleksibel:
-  // Deteksi separator "---" atau "===" → ganti optgroup
-  // Jika tidak ada separator → semua dalam satu optgroup (tanpa grup)
-  const hasSeparator = list.some(l => /^[-=]{3,}$/.test(l));
-
-  if (hasSeparator) {
-    // Gunakan separator sebagai pemisah group
-    // Format: nama group boleh ditulis sebelum separator: "Nama Group\n---"
-    let groupName   = '';
-    let currentGrp  = null;
-
-    list.forEach(line => {
-      if (/^[-=]{3,}$/.test(line)) {
-        // Separator — buat optgroup baru; nama group dari baris sebelumnya
-        currentGrp = document.createElement('optgroup');
-        currentGrp.label = groupName || 'Jabatan';
-        sel.appendChild(currentGrp);
-        groupName = '';
-        return;
-      }
-      if (!currentGrp) {
-        // Baris sebelum separator pertama dianggap nama group berikutnya
-        groupName = line;
-        return;
-      }
-      const opt   = document.createElement('option');
-      opt.value   = line;
-      opt.text    = line;
-      currentGrp.appendChild(opt);
-    });
-  } else {
-    // Tanpa separator: otomatis kelompokkan Wakabid bersama non-Wakabid
-    const grpPimpinan  = [];
-    const grpLainnya   = [];
-    const grpWakabid   = [];
-
-    list.forEach(j => {
-      if (j.startsWith('Wakabid'))                                    grpWakabid.push(j);
-      else if (['Pengawas Madrasah','Kepala Madrasah'].includes(j))   grpPimpinan.push(j);
-      else                                                             grpLainnya.push(j);
-    });
-
-    // Gabung pimpinan + wakabid sebagai kelompok "Pimpinan"
-    const blokPimpinan = [...grpPimpinan, ...grpWakabid];
-
-    if (blokPimpinan.length && grpLainnya.length) {
-      // Ada 2 kelompok → tampilkan pakai optgroup
-      const g1 = document.createElement('optgroup');
-      g1.label = 'Pimpinan';
-      blokPimpinan.forEach(j => {
-        const o = document.createElement('option');
-        o.value = j; o.text = j;
-        g1.appendChild(o);
-      });
-      sel.appendChild(g1);
-
-      const g2 = document.createElement('optgroup');
-      g2.label = 'Tenaga Pendidik & Kependidikan';
-      grpLainnya.forEach(j => {
-        const o = document.createElement('option');
-        o.value = j; o.text = j;
-        g2.appendChild(o);
-      });
-      sel.appendChild(g2);
+  list.forEach(j => {
+    if (j.startsWith('Wakabid') ||
+        j === 'Pengawas Madrasah' ||
+        j === 'Kepala Madrasah' ||
+        j === 'Mabi Sako' ||
+        j === 'Ketua Sako' ||
+        j === 'Sekretaris Sako' ||
+        j === 'Wakil Sekretaris' ||
+        j.startsWith('Wakabidang')) {
+      grpPimpinan.push(j);
     } else {
-      // Semua dalam satu grup tanpa optgroup
-      list.forEach(j => {
-        const o = document.createElement('option');
-        o.value = j; o.text = j;
-        sel.appendChild(o);
-      });
+      grpLainnya.push(j);
     }
+  });
+
+  if (grpPimpinan.length && grpLainnya.length) {
+    // Ada 2 kelompok → pakai optgroup
+    const g1 = document.createElement('optgroup');
+    g1.label = 'Pimpinan';
+    grpPimpinan.forEach(j => { const o = new Option(j, j); g1.appendChild(o); });
+    sel.appendChild(g1);
+
+    const g2 = document.createElement('optgroup');
+    g2.label = 'Anggota Pengurus';
+    grpLainnya.forEach(j => { const o = new Option(j, j); g2.appendChild(o); });
+    sel.appendChild(g2);
+  } else {
+    // Satu kelompok saja → tanpa optgroup
+    list.forEach(j => sel.appendChild(new Option(j, j)));
   }
 }
 
@@ -198,7 +180,7 @@ function applyTheme(setting) {
 
 /* ── LOGO ────────────────────────────────────────────────── */
 function applyLogo(setting) {
-  const LOGO_DEFAULT = 'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png';
+  const LOGO_DEFAULT = 'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png';
   const url = (setting?.logo_url || '').trim() || LOGO_DEFAULT;
   const img = document.getElementById('header-logo-img');
   const svg = document.getElementById('header-logo-fallback');

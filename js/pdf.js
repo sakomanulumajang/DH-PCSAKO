@@ -20,7 +20,7 @@
 
 const PDFExport = (() => {
 
-  const LOGO_DEFAULT = 'https://i.ibb.co.com/B2KQmpM1/logoMI-R.png';
+  const LOGO_DEFAULT = 'https://i.ibb.co.com/8Dp1r5wm/sako-Maarif-NU-logo.png';
 
   /* ── ENTRY POINT ─────────────────────────────────────────── */
   async function cetakDaftarHadir({ kegiatan, hadir, setting }) {
@@ -33,7 +33,7 @@ const PDFExport = (() => {
     const namaSekolah = setting?.nama_sekolah    || 'Instansi';
     const alamat      = setting?.alamat          || '';
     const kota        = setting?.kota            || '';
-    const warna       = setting?.warna_primer    || '#1a73e8';
+    const warna       = setting?.warna_primer    || '#9e5400';
     const logoUrl     = setting?.logo_url        || LOGO_DEFAULT;
 
     const kepala      = (setting?.kepala_madrasah || 'SAHRONI, S.Pd.').trim();
