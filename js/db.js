@@ -261,6 +261,17 @@ const DB = (() => {
     if (!jabatan)               return { ok: false, msg: 'Jabatan harus dipilih.' };
     if (!ttd)                   return { ok: false, msg: 'Tanda tangan wajib diisi.' };
 
+    // ── Cek absen satu kali per perangkat per kegiatan ────────
+    const K_SUDAH_ABSEN = 'dh_sudah_absen_' + idKegiatan;
+    if (localStorage.getItem(K_SUDAH_ABSEN)) {
+      const namaSebelumnya = localStorage.getItem(K_SUDAH_ABSEN);
+      return {
+        ok: false,
+        sudahAbsen: true,
+        msg: 'Anda sudah mengisi daftar hadir untuk kegiatan ini (tercatat atas nama: ' + namaSebelumnya + '). Setiap peserta hanya dapat absen satu kali.'
+      };
+    }
+
     if (isGasMode()) {
       const res = await GasAPI.simpanHadir({ idKegiatan, nama: nama.trim(), jabatan, keterangan: keterangan || '', ttd });
       if (!res.ok) return { ok: false, msg: res.error || 'Gagal menyimpan' };
@@ -272,6 +283,8 @@ const DB = (() => {
       };
       all.push(item);
       lSave(K_HADIR, all);
+      // Tandai sudah absen di perangkat ini
+      localStorage.setItem(K_SUDAH_ABSEN, nama.trim());
       return { ok: true, data: item };
     }
 
@@ -295,6 +308,8 @@ const DB = (() => {
     };
     all.push(item);
     lSave(K_HADIR, all);
+    // Tandai sudah absen di perangkat ini
+    localStorage.setItem(K_SUDAH_ABSEN, nama.trim());
     return { ok: true, data: item };
   }
 

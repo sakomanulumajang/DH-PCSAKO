@@ -45,6 +45,7 @@ async function loadPage() {
     if (currentKegiatan) {
       const hadir = await DB.getHadirByKegiatan(currentKegiatan.id);
       renderDaftarHadir(hadir);
+      checkSudahAbsen();
     }
   } catch (e) {
     showToast('Gagal memuat data: ' + e.message, 'error');
@@ -69,7 +70,7 @@ const DEFAULT_JABATAN_LIST = [
  *   - JSON array string         : '["Guru","Operator","Karyawan"]'
  *   - Array langsung            : ['Guru','Operator']
  * Jika kosong → pakai DEFAULT_JABATAN_LIST.
- * Jabatan berawalan "Wakabid" + "Pengawas/Kepala Madrasah" → optgroup "Pimpinan".
+ * Jabatan berawalan "Wakabid" + "Pengawas/Ketua" → optgroup "Pimpinan".
  * Sisanya → optgroup "Anggota Pengurus".
  * Jika semua masuk satu bucket → tampilkan tanpa optgroup.
  */
@@ -108,6 +109,7 @@ function populateJabatan(setting) {
     if (j.startsWith('Wakabid') ||
         j === 'Pengawas Madrasah' ||
         j === 'Kepala Madrasah' ||
+        j === 'Ketua' ||
         j === 'Mabi Sako' ||
         j === 'Ketua Sako' ||
         j === 'Sekretaris Sako' ||
@@ -304,6 +306,11 @@ async function onSubmit(e) {
     });
 
     if (!result.ok) {
+      // Penolakan khusus: sudah absen
+      if (result.sudahAbsen) {
+        showAlreadyAbsen(result.msg);
+        return;
+      }
       showToast(result.msg, 'error');
       return;
     }
@@ -338,9 +345,34 @@ async function onSubmit(e) {
 function resetForm() {
   document.getElementById('hadir-form').reset();
   SignaturePad.clear();
-  document.getElementById('success-card').style.display = 'none';
-  document.getElementById('form-card').style.display    = 'block';
+  document.getElementById('success-card').style.display     = 'none';
+  document.getElementById('already-absen-card').style.display = 'none';
+  document.getElementById('form-card').style.display        = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── SUDAH ABSEN ─────────────────────────────────────────── */
+function showAlreadyAbsen(msg) {
+  // Sembunyikan form, tampilkan kartu penolakan
+  document.getElementById('form-card').style.display        = 'none';
+  document.getElementById('success-card').style.display     = 'none';
+  document.getElementById('already-absen-card').style.display = 'block';
+  document.getElementById('already-absen-msg').textContent  = msg;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── CEK APAKAH SUDAH ABSEN (saat halaman dimuat) ────────── */
+function checkSudahAbsen() {
+  if (!currentKegiatan) return;
+  const key = 'dh_sudah_absen_' + currentKegiatan.id;
+  const namaTersimpan = localStorage.getItem(key);
+  if (namaTersimpan) {
+    showAlreadyAbsen(
+      'Anda sudah mengisi daftar hadir untuk kegiatan ini ' +
+      '(tercatat atas nama: ' + namaTersimpan + '). ' +
+      'Setiap peserta hanya dapat absen satu kali.'
+    );
+  }
 }
 
 /* ── UTILS ───────────────────────────────────────────────── */

@@ -100,7 +100,7 @@ const PDFExport = (() => {
     const blokKepala2 = `
       <div class="ttd-blok">
         <div class="ttd-lbl-atas">Mengetahui,</div>
-        <div class="ttd-jabatan">Kepala Madrasah</div>
+        <div class="ttd-jabatan">Ketua</div>
         <div class="ttd-ruang"></div>
         <div class="ttd-nama">${escH(kepala)}</div>
       </div>`;
@@ -117,7 +117,7 @@ const PDFExport = (() => {
     const blokKepalaOnly = `
       <div class="ttd-blok ttd-blok-only">
         <div class="ttd-lbl-atas">${escH(kotaTanggal)}</div>
-        <div class="ttd-jabatan">Mengetahui,<br>Kepala Madrasah</div>
+        <div class="ttd-jabatan">Mengetahui,<br>Ketua</div>
         <div class="ttd-ruang"></div>
         <div class="ttd-nama">${escH(kepala)}</div>
       </div>`;

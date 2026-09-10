@@ -12,7 +12,8 @@
 
 <!-- ── LOADING ──────────────────────────────────────────── -->
 <div id="loading-overlay">
-  <div class="loader"></div>
+  <h1 class="title">BERSIAP ISI PRESENSI DI SAKO</h1>
+  <div class="rainbow-marker-loader"></div>
 </div>
 
 <!-- ── TOAST ────────────────────────────────────────────── -->
